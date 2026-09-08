@@ -8,6 +8,9 @@ function KOT({ goBack }) {
   const [quantity, setQuantity] = useState(1)
   const [orderItems, setOrderItems] = useState([])
 
+  const [discount, setDiscount] = useState(0)
+  const [paymentMethod, setPaymentMethod] = useState('Cash')
+
   const addItem = () => {
     if (!selectedItem) {
       alert('Please select an item')
@@ -43,16 +46,25 @@ function KOT({ goBack }) {
     0
   )
 
+  const finalAmount = Math.max(
+    0,
+    subtotal - Number(discount)
+  )
+
   const saveKOT = () => {
     if (orderItems.length === 0) {
       alert('Please add at least one item')
       return
     }
 
-    alert(`KOT No. ${kotNumber} saved!`)
+    alert(
+      `KOT No. ${kotNumber} saved!\nFinal Amount: Rs. ${finalAmount}\nPayment: ${paymentMethod}`
+    )
 
     setKotNumber(kotNumber + 1)
     setOrderItems([])
+    setDiscount(0)
+    setPaymentMethod('Cash')
   }
 
   return (
@@ -110,6 +122,34 @@ function KOT({ goBack }) {
       ))}
 
       <h3>Subtotal: Rs. {subtotal}</h3>
+
+      <label>Discount: Rs. </label>
+
+      <input
+        type="number"
+        min="0"
+        value={discount}
+        onChange={(e) => setDiscount(e.target.value)}
+      />
+
+      <h3>Final Amount: Rs. {finalAmount}</h3>
+
+      <br />
+
+      <label>Payment Method: </label>
+
+      <select
+        value={paymentMethod}
+        onChange={(e) => setPaymentMethod(e.target.value)}
+      >
+        <option value="Cash">Cash</option>
+        <option value="QR">QR</option>
+        <option value="Card">Card</option>
+        <option value="Credit">Credit</option>
+      </select>
+
+      <br />
+      <br />
 
       <button onClick={saveKOT}>Save KOT</button>
 
