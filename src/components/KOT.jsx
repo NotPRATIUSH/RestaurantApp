@@ -2,6 +2,8 @@ import { useState } from 'react'
 import menuItems from '../data/menu'
 
 function KOT({ goBack }) {
+  const [kotNumber, setKotNumber] = useState(1)
+
   const [selectedItem, setSelectedItem] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [orderItems, setOrderItems] = useState([])
@@ -41,9 +43,23 @@ function KOT({ goBack }) {
     0
   )
 
+  const saveKOT = () => {
+    if (orderItems.length === 0) {
+      alert('Please add at least one item')
+      return
+    }
+
+    alert(`KOT No. ${kotNumber} saved!`)
+
+    setKotNumber(kotNumber + 1)
+    setOrderItems([])
+  }
+
   return (
     <div>
       <h1>New KOT</h1>
+
+      <h2>KOT No. {kotNumber}</h2>
 
       <label>Select Item: </label>
 
@@ -94,6 +110,11 @@ function KOT({ goBack }) {
       ))}
 
       <h3>Subtotal: Rs. {subtotal}</h3>
+
+      <button onClick={saveKOT}>Save KOT</button>
+
+      <br />
+      <br />
 
       <button onClick={goBack}>Back to Dashboard</button>
     </div>
