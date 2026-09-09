@@ -2,65 +2,166 @@ import { useState } from 'react'
 import menuItems from '../data/menu'
 
 function KOT({ goBack }) {
+  // -----------------------------
+  // BASIC KOT STATE
+  // -----------------------------
+
   const [kotNumber, setKotNumber] = useState(1)
 
   const [selectedItem, setSelectedItem] = useState('')
   const [quantity, setQuantity] = useState(1)
+
   const [orderItems, setOrderItems] = useState([])
 
   const [discount, setDiscount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState('Cash')
 
+  // Stores all saved KOTs
   const [kotHistory, setKotHistory] = useState([])
 
-  const addItem = () => {
+  // Stores KOT number currently being edited
+  const [editingKotNumber, setEditingKotNumber] = useState(null)
+
+  // -----------------------------
+  // ADD ITEM
+  // -----------------------------
+
+  function addItem() {
     if (!selectedItem) {
       alert('Please select an item')
       return
     }
 
-    const menuItem = menuItems.find(
-      (item) => item.id === Number(selectedItem)
+    if (Number(quantity) <= 0) {
+      alert('Quantity must be at least 1')
+      return
+    }
+
+    const item = menuItems.find(
+      (menuItem) => menuItem.id === Number(selectedItem)
     )
 
+    if (!item) {
+      alert('Item not found')
+      return
+    }
+
     const newItem = {
-      id: menuItem.id,
-      name: menuItem.name,
-      price: menuItem.price,
+      id: item.id,
+      name: item.name,
+      price: item.price,
       quantity: Number(quantity),
-      total: menuItem.price * Number(quantity),
+      total: item.price * Number(quantity),
     }
 
     setOrderItems([...orderItems, newItem])
 
+    // Reset item selection
     setSelectedItem('')
     setQuantity(1)
   }
 
-  const removeItem = (indexToRemove) => {
-    setOrderItems(
-      orderItems.filter((_, index) => index !== indexToRemove)
-    )
+  // -----------------------------
+  // INCREASE QUANTITY
+  // -----------------------------
+
+  function increaseQuantity(index) {
+    const updatedItems = orderItems.map((item, itemIndex) => {
+      if (itemIndex === index) {
+        const newQuantity = item.quantity + 1
+
+        return {
+          ...item,
+          quantity: newQuantity,
+          total: item.price * newQuantity,
+        }
+      }
+
+      return item
+    })
+
+    setOrderItems(updatedItems)
   }
 
+  // -----------------------------
+  // DECREASE QUANTITY
+  // -----------------------------
+
+  function decreaseQuantity(index) {
+    const updatedItems = orderItems.map((item, itemIndex) => {
+      if (itemIndex === index) {
+        const newQuantity = item.quantity - 1
+
+        // Don't allow quantity to become 0
+        if (newQuantity < 1) {
+          return item
+        }
+
+        return {
+          ...item,
+          quantity: newQuantity,
+          total: item.price * newQuantity,
+        }
+      }
+
+      return item
+    })
+
+    setOrderItems(updatedItems)
+  }
+
+  // -----------------------------
+  // REMOVE ITEM
+  // -----------------------------
+
+  function removeItem(indexToRemove) {
+    const updatedItems = orderItems.filter(
+      (_, index) => index !== indexToRemove
+    )
+
+    setOrderItems(updatedItems)
+  }
+
+  // -----------------------------
+  // CALCULATIONS
+  // -----------------------------
+
   const subtotal = orderItems.reduce(
-    (sum, item) => sum + item.total,
+    (total, item) => total + item.total,
     0
   )
 
-  const finalAmount = Math.max(
-    0,
-    subtotal - Number(discount)
-  )
+  const finalAmount = subtotal - Number(discount)
 
-  const saveKOT = () => {
+  // -----------------------------
+  // RESET CURRENT KOT
+  // -----------------------------
+
+  function resetKOT() {
+    setOrderItems([])
+    setDiscount(0)
+    setPaymentMethod('Cash')
+    setSelectedItem('')
+    setQuantity(1)
+  }
+
+  // -----------------------------
+  // SAVE NEW KOT
+  // -----------------------------
+
+  function saveKOT() {
     if (orderItems.length === 0) {
       alert('Please add at least one item')
       return
     }
 
+    if (Number(discount) < 0) {
+      alert('Discount cannot be negative')
+      return
+    }
+
     if (Number(discount) > subtotal) {
-      alert('Discount cannot be greater than the subtotal')
+      alert('Discount cannot be greater than subtotal')
       return
     }
 
@@ -75,171 +176,520 @@ function KOT({ goBack }) {
 
     setKotHistory([...kotHistory, newKOT])
 
-    alert(
-      `KOT No. ${kotNumber} saved!\nFinal Amount: Rs. ${finalAmount}\nPayment: ${paymentMethod}`
-    )
-
+    // Move to next KOT number
     setKotNumber(kotNumber + 1)
-    setOrderItems([])
-    setDiscount(0)
-    setPaymentMethod('Cash')
+
+    // Clear current KOT
+    resetKOT()
+
+    alert(`KOT #${kotNumber} saved successfully`)
   }
 
-  // -------------------------
+  // -----------------------------
+  // START EDITING KOT
+  // -----------------------------
+
+  function editKOT(kot) {
+    setEditingKotNumber(kot.kotNumber)
+
+    setOrderItems(kot.items)
+    setDiscount(kot.discount)
+    setPaymentMethod(kot.paymentMethod)
+
+    // Reset item selector
+    setSelectedItem('')
+    setQuantity(1)
+
+    // Scroll to top
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
+
+  // -----------------------------
+  // UPDATE EXISTING KOT
+  // -----------------------------
+
+  function updateKOT() {
+    if (orderItems.length === 0) {
+      alert('Please add at least one item')
+      return
+    }
+
+    if (Number(discount) < 0) {
+      alert('Discount cannot be negative')
+      return
+    }
+
+    if (Number(discount) > subtotal) {
+      alert('Discount cannot be greater than subtotal')
+      return
+    }
+
+    const updatedKOT = {
+      kotNumber: editingKotNumber,
+      items: orderItems,
+      subtotal: subtotal,
+      discount: Number(discount),
+      finalAmount: finalAmount,
+      paymentMethod: paymentMethod,
+    }
+
+    const updatedHistory = kotHistory.map((kot) =>
+      kot.kotNumber === editingKotNumber
+        ? updatedKOT
+        : kot
+    )
+
+    setKotHistory(updatedHistory)
+
+    // Exit edit mode
+    setEditingKotNumber(null)
+
+    // Clear form
+    resetKOT()
+
+    alert(`KOT #${editingKotNumber} updated successfully`)
+  }
+
+  // -----------------------------
+  // CANCEL EDIT
+  // -----------------------------
+
+  function cancelEdit() {
+    setEditingKotNumber(null)
+
+    resetKOT()
+  }
+
+  // -----------------------------
   // SALES SUMMARY
-  // -------------------------
+  // -----------------------------
 
   const totalSales = kotHistory.reduce(
-    (sum, kot) => sum + kot.finalAmount,
+    (total, kot) => total + kot.finalAmount,
+    0
+  )
+
+  const totalDiscount = kotHistory.reduce(
+    (total, kot) => total + kot.discount,
+    0
+  )
+
+  const totalSubtotal = kotHistory.reduce(
+    (total, kot) => total + kot.subtotal,
     0
   )
 
   const cashSales = kotHistory
     .filter((kot) => kot.paymentMethod === 'Cash')
-    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+    .reduce((total, kot) => total + kot.finalAmount, 0)
 
   const qrSales = kotHistory
     .filter((kot) => kot.paymentMethod === 'QR')
-    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+    .reduce((total, kot) => total + kot.finalAmount, 0)
 
   const cardSales = kotHistory
     .filter((kot) => kot.paymentMethod === 'Card')
-    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+    .reduce((total, kot) => total + kot.finalAmount, 0)
 
   const creditSales = kotHistory
     .filter((kot) => kot.paymentMethod === 'Credit')
-    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+    .reduce((total, kot) => total + kot.finalAmount, 0)
+
+  // -----------------------------
+  // PAGE
+  // -----------------------------
 
   return (
     <div>
-      <h1>New KOT</h1>
+      {/* BACK BUTTON */}
 
-      <h2>KOT No. {kotNumber}</h2>
+      <button onClick={goBack}>
+        ← Back to Dashboard
+      </button>
 
-      <label>Select Item: </label>
+      <h1>
+        {editingKotNumber !== null
+          ? `Edit KOT #${editingKotNumber}`
+          : 'New KOT'}
+      </h1>
 
-      <select
-        value={selectedItem}
-        onChange={(e) => setSelectedItem(e.target.value)}
-      >
-        <option value="">-- Select an item --</option>
+      {/* KOT NUMBER */}
 
-        {menuItems.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.name} - Rs. {item.price}
-          </option>
-        ))}
-      </select>
+      <p>
+        <strong>KOT Number:</strong>{' '}
+        {editingKotNumber !== null
+          ? editingKotNumber
+          : kotNumber}
+      </p>
+
+      {/* -----------------------------
+          ITEM SELECTION
+      ----------------------------- */}
+
+      <h2>Add Item</h2>
+
+      <div>
+        <label>
+          Select Item:{' '}
+
+          <select
+            value={selectedItem}
+            onChange={(e) =>
+              setSelectedItem(e.target.value)
+            }
+          >
+            <option value="">
+              -- Select Item --
+            </option>
+
+            {menuItems.map((item) => (
+              <option
+                key={item.id}
+                value={item.id}
+              >
+                {item.name} - Rs. {item.price}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <br />
+
+      <div>
+        <label>
+          Quantity:{' '}
+
+          <input
+            type="number"
+            min="1"
+            value={quantity}
+            onChange={(e) =>
+              setQuantity(e.target.value)
+            }
+          />
+        </label>
+      </div>
+
       <br />
 
-      <label>Quantity: </label>
-
-      <input
-        type="number"
-        min="1"
-        value={quantity}
-        onChange={(e) => setQuantity(e.target.value)}
-      />
-
-      <br />
-      <br />
-
-      <button onClick={addItem}>Add Item</button>
+      <button onClick={addItem}>
+        Add Item
+      </button>
 
       <hr />
 
-      <h2>Order</h2>
+      {/* -----------------------------
+          CURRENT KOT
+      ----------------------------- */}
 
-      {orderItems.map((item, index) => (
-        <div key={index}>
-          <p>
-            {item.name} × {item.quantity} = Rs. {item.total}
+      <h2>Current KOT</h2>
 
-            <button onClick={() => removeItem(index)}>
-              Remove
-            </button>
-          </p>
+      {orderItems.length === 0 ? (
+        <p>No items added yet.</p>
+      ) : (
+        <table
+          border="1"
+          cellPadding="8"
+        >
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Total</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {orderItems.map((item, index) => (
+              <tr key={index}>
+                <td>
+                  {item.name}
+                </td>
+
+                <td>
+                  Rs. {item.price}
+                </td>
+
+                <td>
+                  <button
+                    onClick={() =>
+                      decreaseQuantity(index)
+                    }
+                  >
+                    -
+                  </button>
+
+                  {' '}
+
+                  {item.quantity}
+
+                  {' '}
+
+                  <button
+                    onClick={() =>
+                      increaseQuantity(index)
+                    }
+                  >
+                    +
+                  </button>
+                </td>
+
+                <td>
+                  Rs. {item.total}
+                </td>
+
+                <td>
+                  <button
+                    onClick={() =>
+                      removeItem(index)
+                    }
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <br />
+
+      {/* -----------------------------
+          TOTALS
+      ----------------------------- */}
+
+      <p>
+        <strong>
+          Subtotal:
+        </strong>{' '}
+        Rs. {subtotal}
+      </p>
+
+      <div>
+        <label>
+          Discount: Rs.{' '}
+
+          <input
+            type="number"
+            min="0"
+            value={discount}
+            onChange={(e) =>
+              setDiscount(e.target.value)
+            }
+          />
+        </label>
+      </div>
+
+      <br />
+
+      <p>
+        <strong>
+          Final Amount:
+        </strong>{' '}
+        Rs. {finalAmount}
+      </p>
+
+      {/* -----------------------------
+          PAYMENT METHOD
+      ----------------------------- */}
+
+      <div>
+        <label>
+          Payment Method:{' '}
+
+          <select
+            value={paymentMethod}
+            onChange={(e) =>
+              setPaymentMethod(e.target.value)
+            }
+          >
+            <option value="Cash">
+              Cash
+            </option>
+
+            <option value="QR">
+              QR
+            </option>
+
+            <option value="Card">
+              Card
+            </option>
+
+            <option value="Credit">
+              Credit
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <br />
+
+      {/* -----------------------------
+          SAVE / UPDATE
+      ----------------------------- */}
+
+      {editingKotNumber !== null ? (
+        <div>
+          <button onClick={updateKOT}>
+            Update KOT
+          </button>
+
+          {' '}
+
+          <button onClick={cancelEdit}>
+            Cancel Edit
+          </button>
         </div>
-      ))}
-
-      <h3>Subtotal: Rs. {subtotal}</h3>
-
-      <label>Discount: Rs. </label>
-
-      <input
-        type="number"
-        min="0"
-        value={discount}
-        onChange={(e) => setDiscount(e.target.value)}
-      />
-
-      <h3>Final Amount: Rs. {finalAmount}</h3>
-
-      <br />
-
-      <label>Payment Method: </label>
-
-      <select
-        value={paymentMethod}
-        onChange={(e) => setPaymentMethod(e.target.value)}
-      >
-        <option value="Cash">Cash</option>
-        <option value="QR">QR</option>
-        <option value="Card">Card</option>
-        <option value="Credit">Credit</option>
-      </select>
-
-      <br />
-      <br />
-
-      <button onClick={saveKOT}>Save KOT</button>
+      ) : (
+        <button onClick={saveKOT}>
+          Save KOT
+        </button>
+      )}
 
       <hr />
+
+      {/* -----------------------------
+          SALES SUMMARY
+      ----------------------------- */}
 
       <h2>Sales Summary</h2>
 
-      <p>Total KOTs: {kotHistory.length}</p>
+      <p>
+        <strong>
+          Total KOTs:
+        </strong>{' '}
+        {kotHistory.length}
+      </p>
 
-      <p>Total Sales: Rs. {totalSales}</p>
+      <p>
+        <strong>
+          Gross Sales:
+        </strong>{' '}
+        Rs. {totalSubtotal}
+      </p>
 
-      <p>Cash Sales: Rs. {cashSales}</p>
+      <p>
+        <strong>
+          Total Discount:
+        </strong>{' '}
+        Rs. {totalDiscount}
+      </p>
 
-      <p>QR Sales: Rs. {qrSales}</p>
+      <p>
+        <strong>
+          Net Sales:
+        </strong>{' '}
+        Rs. {totalSales}
+      </p>
 
-      <p>Card Sales: Rs. {cardSales}</p>
+      <h3>
+        Sales by Payment Method
+      </h3>
 
-      <p>Credit Sales: Rs. {creditSales}</p>
+      <p>
+        <strong>
+          Cash:
+        </strong>{' '}
+        Rs. {cashSales}
+      </p>
+
+      <p>
+        <strong>
+          QR:
+        </strong>{' '}
+        Rs. {qrSales}
+      </p>
+
+      <p>
+        <strong>
+          Card:
+        </strong>{' '}
+        Rs. {cardSales}
+      </p>
+
+      <p>
+        <strong>
+          Credit:
+        </strong>{' '}
+        Rs. {creditSales}
+      </p>
 
       <hr />
+
+      {/* -----------------------------
+          KOT HISTORY
+      ----------------------------- */}
 
       <h2>KOT History</h2>
 
       {kotHistory.length === 0 ? (
-        <p>No KOTs saved yet.</p>
+        <p>
+          No KOTs saved yet.
+        </p>
       ) : (
         kotHistory.map((kot) => (
           <div key={kot.kotNumber}>
-            <h3>KOT #{kot.kotNumber}</h3>
+            <h3>
+              KOT #{kot.kotNumber}
+            </h3>
 
-            {kot.items.map((item, index) => (
-              <p key={index}>
-                {item.name} × {item.quantity} = Rs. {item.total}
-              </p>
-            ))}
+            {kot.items.map(
+              (item, index) => (
+                <p key={index}>
+                  {item.name} ×{' '}
+                  {item.quantity} = Rs.{' '}
+                  {item.total}
+                </p>
+              )
+            )}
 
-            <p>Subtotal: Rs. {kot.subtotal}</p>
-            <p>Discount: Rs. {kot.discount}</p>
-            <p>Final Amount: Rs. {kot.finalAmount}</p>
-            <p>Payment: {kot.paymentMethod}</p>
+            <p>
+              <strong>
+                Subtotal:
+              </strong>{' '}
+              Rs. {kot.subtotal}
+            </p>
+
+            <p>
+              <strong>
+                Discount:
+              </strong>{' '}
+              Rs. {kot.discount}
+            </p>
+
+            <p>
+              <strong>
+                Final Amount:
+              </strong>{' '}
+              Rs. {kot.finalAmount}
+            </p>
+
+            <p>
+              <strong>
+                Payment:
+              </strong>{' '}
+              {kot.paymentMethod}
+            </p>
+
+            <button
+              onClick={() =>
+                editKOT(kot)
+              }
+            >
+              Edit KOT
+            </button>
 
             <hr />
           </div>
         ))
       )}
-
-      <button onClick={goBack}>Back to Dashboard</button>
     </div>
   )
 }
