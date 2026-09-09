@@ -11,7 +11,6 @@ function KOT({ goBack }) {
   const [discount, setDiscount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState('Cash')
 
-  // Stores all saved KOTs
   const [kotHistory, setKotHistory] = useState([])
 
   const addItem = () => {
@@ -74,7 +73,6 @@ function KOT({ goBack }) {
       paymentMethod: paymentMethod,
     }
 
-    // Add the new KOT to history
     setKotHistory([...kotHistory, newKOT])
 
     alert(
@@ -86,6 +84,31 @@ function KOT({ goBack }) {
     setDiscount(0)
     setPaymentMethod('Cash')
   }
+
+  // -------------------------
+  // SALES SUMMARY
+  // -------------------------
+
+  const totalSales = kotHistory.reduce(
+    (sum, kot) => sum + kot.finalAmount,
+    0
+  )
+
+  const cashSales = kotHistory
+    .filter((kot) => kot.paymentMethod === 'Cash')
+    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+
+  const qrSales = kotHistory
+    .filter((kot) => kot.paymentMethod === 'QR')
+    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+
+  const cardSales = kotHistory
+    .filter((kot) => kot.paymentMethod === 'Card')
+    .reduce((sum, kot) => sum + kot.finalAmount, 0)
+
+  const creditSales = kotHistory
+    .filter((kot) => kot.paymentMethod === 'Credit')
+    .reduce((sum, kot) => sum + kot.finalAmount, 0)
 
   return (
     <div>
@@ -172,6 +195,22 @@ function KOT({ goBack }) {
       <br />
 
       <button onClick={saveKOT}>Save KOT</button>
+
+      <hr />
+
+      <h2>Sales Summary</h2>
+
+      <p>Total KOTs: {kotHistory.length}</p>
+
+      <p>Total Sales: Rs. {totalSales}</p>
+
+      <p>Cash Sales: Rs. {cashSales}</p>
+
+      <p>QR Sales: Rs. {qrSales}</p>
+
+      <p>Card Sales: Rs. {cardSales}</p>
+
+      <p>Credit Sales: Rs. {creditSales}</p>
 
       <hr />
 
