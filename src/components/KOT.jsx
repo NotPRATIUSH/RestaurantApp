@@ -11,6 +11,9 @@ function KOT({ goBack }) {
   const [discount, setDiscount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState('Cash')
 
+  // Stores all saved KOTs
+  const [kotHistory, setKotHistory] = useState([])
+
   const addItem = () => {
     if (!selectedItem) {
       alert('Please select an item')
@@ -56,6 +59,23 @@ function KOT({ goBack }) {
       alert('Please add at least one item')
       return
     }
+
+    if (Number(discount) > subtotal) {
+      alert('Discount cannot be greater than the subtotal')
+      return
+    }
+
+    const newKOT = {
+      kotNumber: kotNumber,
+      items: orderItems,
+      subtotal: subtotal,
+      discount: Number(discount),
+      finalAmount: finalAmount,
+      paymentMethod: paymentMethod,
+    }
+
+    // Add the new KOT to history
+    setKotHistory([...kotHistory, newKOT])
 
     alert(
       `KOT No. ${kotNumber} saved!\nFinal Amount: Rs. ${finalAmount}\nPayment: ${paymentMethod}`
@@ -153,8 +173,32 @@ function KOT({ goBack }) {
 
       <button onClick={saveKOT}>Save KOT</button>
 
-      <br />
-      <br />
+      <hr />
+
+      <h2>KOT History</h2>
+
+      {kotHistory.length === 0 ? (
+        <p>No KOTs saved yet.</p>
+      ) : (
+        kotHistory.map((kot) => (
+          <div key={kot.kotNumber}>
+            <h3>KOT #{kot.kotNumber}</h3>
+
+            {kot.items.map((item, index) => (
+              <p key={index}>
+                {item.name} × {item.quantity} = Rs. {item.total}
+              </p>
+            ))}
+
+            <p>Subtotal: Rs. {kot.subtotal}</p>
+            <p>Discount: Rs. {kot.discount}</p>
+            <p>Final Amount: Rs. {kot.finalAmount}</p>
+            <p>Payment: {kot.paymentMethod}</p>
+
+            <hr />
+          </div>
+        ))
+      )}
 
       <button onClick={goBack}>Back to Dashboard</button>
     </div>
