@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import menuItems from '../data/menu'
+import KOTItemForm from './KOTItemForm'
+import KOTTable from './KOTTable'
 
 function KOT({ goBack }) {
   // -----------------------------
@@ -325,145 +327,31 @@ function KOT({ goBack }) {
           : kotNumber}
       </p>
 
-      {/* -----------------------------
-          ITEM SELECTION
-      ----------------------------- */}
+      {/* ITEM SELECTION */}
 
-      <h2>Add Item</h2>
-
-      <div>
-        <label>
-          Select Item:{' '}
-
-          <select
-            value={selectedItem}
-            onChange={(e) =>
-              setSelectedItem(e.target.value)
-            }
-          >
-            <option value="">
-              -- Select Item --
-            </option>
-
-            {menuItems.map((item) => (
-              <option
-                key={item.id}
-                value={item.id}
-              >
-                {item.name} - Rs. {item.price}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <br />
-
-      <div>
-        <label>
-          Quantity:{' '}
-
-          <input
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={(e) =>
-              setQuantity(e.target.value)
-            }
-          />
-        </label>
-      </div>
-
-      <br />
-
-      <button onClick={addItem}>
-        Add Item
-      </button>
+      <KOTItemForm
+        menuItems={menuItems}
+        selectedItem={selectedItem}
+        setSelectedItem={setSelectedItem}
+        quantity={quantity}
+        setQuantity={setQuantity}
+        addItem={addItem}
+      />
 
       <hr />
 
-      {/* -----------------------------
-          CURRENT KOT
-      ----------------------------- */}
+      {/* CURRENT KOT */}
 
-      <h2>Current KOT</h2>
-
-      {orderItems.length === 0 ? (
-        <p>No items added yet.</p>
-      ) : (
-        <table
-          border="1"
-          cellPadding="8"
-        >
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Price</th>
-              <th>Quantity</th>
-              <th>Total</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {orderItems.map((item, index) => (
-              <tr key={index}>
-                <td>
-                  {item.name}
-                </td>
-
-                <td>
-                  Rs. {item.price}
-                </td>
-
-                <td>
-                  <button
-                    onClick={() =>
-                      decreaseQuantity(index)
-                    }
-                  >
-                    -
-                  </button>
-
-                  {' '}
-
-                  {item.quantity}
-
-                  {' '}
-
-                  <button
-                    onClick={() =>
-                      increaseQuantity(index)
-                    }
-                  >
-                    +
-                  </button>
-                </td>
-
-                <td>
-                  Rs. {item.total}
-                </td>
-
-                <td>
-                  <button
-                    onClick={() =>
-                      removeItem(index)
-                    }
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <KOTTable
+        orderItems={orderItems}
+        decreaseQuantity={decreaseQuantity}
+        increaseQuantity={increaseQuantity}
+        removeItem={removeItem}
+      />
 
       <br />
 
-      {/* -----------------------------
-          TOTALS
-      ----------------------------- */}
+      {/* TOTALS */}
 
       <p>
         <strong>
@@ -496,9 +384,7 @@ function KOT({ goBack }) {
         Rs. {finalAmount}
       </p>
 
-      {/* -----------------------------
-          PAYMENT METHOD
-      ----------------------------- */}
+      {/* PAYMENT METHOD */}
 
       <div>
         <label>
@@ -531,9 +417,7 @@ function KOT({ goBack }) {
 
       <br />
 
-      {/* -----------------------------
-          SAVE / UPDATE
-      ----------------------------- */}
+      {/* SAVE / UPDATE */}
 
       {editingKotNumber !== null ? (
         <div>
@@ -555,9 +439,7 @@ function KOT({ goBack }) {
 
       <hr />
 
-      {/* -----------------------------
-          SALES SUMMARY
-      ----------------------------- */}
+      {/* SALES SUMMARY */}
 
       <h2>Sales Summary</h2>
 
@@ -623,9 +505,7 @@ function KOT({ goBack }) {
 
       <hr />
 
-      {/* -----------------------------
-          KOT HISTORY
-      ----------------------------- */}
+      {/* KOT HISTORY */}
 
       <h2>KOT History</h2>
 
